@@ -54,6 +54,17 @@ class App:
         if percent != -1:
             pygame.draw.rect(self.screen, self.white, (x, scrollbox_y, scrollbox_width, scrollbox_height), 0)
 
+    def read_cpu_clock(self):
+        try:
+            retroarch_path = '/mnt/SDCARD/RetroArch'
+            clock_file = os.path.join(retroarch_path, 'cpuclock.txt')
+            if os.path.exists(clock_file):
+                with open(clock_file, 'r') as f:
+                    return f.read().strip()
+            return '1200'  # Default value when file doesn't exist
+        except:
+            return '1200'  # Default value on any error
+
     def __init__(self):
         pygame.init()
         self.device_type = self.detect_device_type()
@@ -96,26 +107,11 @@ class App:
         self.list_selected_offset = 0  
         self.list_selected_item = ''
         
-        self.memo = 'Python is a high-level programming language that has gained immense popularity due to its numerous advantages. Here are some key benefits that make Python attractive to developers and organizations worldwide:\n\n'
-        self.memo += '1. Simplicity and Readability:\nPython is known for its simple and concise syntax, which makes it easy to read and understand, even for beginners. This reduces learning time and simplifies code maintenance.\n\n' 
-        self.memo += '2. Extensive Libraries and Frameworks:\nPython has a vast standard library and numerous third-party libraries and frameworks, allowing it to address a wide range of tasks from web development (Django, Flask) to data analysis (Pandas, NumPy) and machine learning (TensorFlow, scikit-learn).\n\n' 
-        self.memo += '3. Cross-Platform Compatibility: Python is cross-platform, meaning code written in Python can run on various operating systems like Windows, macOS, and Linux without modification.\n\n'
-        self.memo += '4. Community and Support:\nPython boasts one of the largest and most active developer communities. This ensures ample resources, support, and regular updates to keep the language current with modern needs.\n\n'
-        self.memo += '5. Versatility:\nPython is used in numerous fields, including web development, scientific research, artificial intelligence, and task automation. Its versatility allows developers to use the same language for various tasks, enhancing efficiency.\n\n'
-        self.memo += '6. High Development Productivity:\nPython''s high-level syntax and rich library ecosystem accelerate development, reducing time-to-market and increasing development flexibility.\n\n'
-        self.memo += '7. Integration with Other Languages:\nPython easily integrates with other languages like C, C++, and Java, serving as a bridge between different software components and maximizing performance.\n\n'
-        self.memo += '8. Educational Use:\nDue to its simplicity, Python is often used for educational purposes, making it an excellent first language for learning programming basics.\n\n'
-        self.memo += 'Overall, Python offers a powerful set of tools and capabilities, making it an ideal choice for solving diverse programming challenges.'
-        
-        #self.memo = '1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 '
-        
-        self.memo_line_offset = 0
-        self.memo_lines_max = 0
-        self.memo_lines_ouput_max = 13
-        
+        # Read current CPU clock
+        self.current_clock = self.read_cpu_clock()
+         
         # Statuses
         self.progressbar_value = 75
-        self.item1_turn_status = '< turn on>'
         self.btn1_active = False
         self.btn2_active = False
 
@@ -141,6 +137,23 @@ class App:
         except:
             return False
 
+    def update_nds_settings(self, clock_value):
+        try:
+            settings_path = '/mnt/SDCARD/Emu/NDS/resources/settings.json'
+            if os.path.exists(settings_path):
+                import json
+                # Read current settings
+                with open(settings_path, 'r') as f:
+                    settings = json.load(f)
+                # Update maxcpu value
+                settings['maxcpu'] = int(clock_value)
+                # Write updated settings
+                with open(settings_path, 'w') as f:
+                    json.dump(settings, f, indent=4)
+                return True
+        except:
+            return False
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -151,10 +164,7 @@ class App:
                     self.layout_index = 2  # Switch to goodbye screen
                     self.goodbye_start_time = pygame.time.get_ticks()
                 elif self.layout_index == 0:
-                    if event.key == K_ESCAPE or event.key == K_BACKSPACE or event.key == K_SPACE:
-                        pygame.quit()
-                        sys.exit()
-                    elif event.key == K_UP:
+                    if event.key == K_UP:
                         if self.list_selected_index > 0:
                             self.list_selected_index -= 1
                         else:
@@ -164,34 +174,39 @@ class App:
                             self.list_selected_index += 1
                         else:
                             self.list_selected_index = 0
-                    elif event.key == K_LEFT:
-                        if self.progressbar_value > 0:
-                            self.progressbar_value -= 1
-                    elif event.key == K_RIGHT:
-                        if self.progressbar_value < 100:
-                            self.progressbar_value += 1
-                    elif event.key == K_RETURN or event.key == K_LCTRL:  # START or B button
+                    elif event.key == K_RETURN or event.key == K_LCTRL or event.key == K_SPACE:  # START or B or A button
                         self.list_selected_item = self.main_list[self.list_selected_index]
+                        success = True
+                        settings_updated = False
+                        
                         # Write CPU clock value when an item is selected
-                        if self.write_cpu_clock(self.list_selected_item):
-                            self.status_message = 'Clock speed set successfully!'
+                        if not self.write_cpu_clock(self.list_selected_item):
+                            success = False
+                        
+                        # Update settings if needed
+                        if success:
+                            settings_updated = self.update_nds_settings(self.list_selected_item)
+                            self.current_clock = self.list_selected_item  # Update current clock value
+                            
+                        # Set appropriate status message
+                        if success:
+                            if settings_updated:
+                                self.status_message = 'Settings updated successfully!'
+                            else:
+                                self.status_message = 'Clock speed updated!'
                             self.status_color = self.green
-                            self.status_start_time = pygame.time.get_ticks()
                         else:
-                            self.status_message = 'Failed to set clock speed'
+                            self.status_message = 'Failed to update settings'
                             self.status_color = self.red
-                            self.status_start_time = pygame.time.get_ticks()
-                    elif event.key == K_e:
-                        self.btn1_active = not self.btn1_active
-                    elif event.key == K_t:
-                        self.btn2_active = not self.btn2_active
+                        self.status_start_time = pygame.time.get_ticks()
+                        
                     if self.list_selected_index > self.main_list_output_max - 1:
                         self.list_selected_offset = self.list_selected_index // self.main_list_output_max * self.main_list_output_max
                     else:
                         self.list_selected_offset = 0
                     
                 elif self.layout_index == 1:
-                    if event.key == K_ESCAPE or event.key == K_BACKSPACE or event.key == K_SPACE:
+                    if event.key == K_ESCAPE or event.key == K_BACKSPACE:
                         self.layout_index = 0
                     elif event.key == K_UP:
                         if self.memo_line_offset > 0:
@@ -204,9 +219,6 @@ class App:
         self.screen.fill((0, 0, 0))
         if self.layout_index == 0:
             self.draw_layout_list()
-            self.draw_button(320, 430, 'Btn 1 (L)', self.btn1_active)
-            self.draw_button(430, 430, 'Btn 2 (R)', self.btn2_active)
-            self.draw_progressbar(8, 440, 300, 20, self.progressbar_value)
         elif self.layout_index == 1:
             self.draw_layout_memo()
         elif self.layout_index == 2:
@@ -219,7 +231,7 @@ class App:
         pygame.display.flip()
         
     def draw_layout_list(self):
-        self.draw_text(self.font, self.white, 8, 8, 'left', 'List')
+        self.draw_text(self.font, self.white, 8, 8, 'left', 'CPU Clock Speeds')
         self.draw_text(self.font, self.gray, self.app_width - 8, 8, 'right', self.device_type)
         
         # Draw status message if within time window (2 seconds)
@@ -244,11 +256,18 @@ class App:
             width = self.app_width - 16
             height = self.font_size
             pygame.draw.rect(self.screen, item_background_color, (x, y, width, height - 1), 0)
-            self.draw_text(self.font, item_font_color, x + 2, y + 4, 'left', self.cut_str(line, 70))
             
-            if i == 0:
-                self.draw_text(self.font, item_font_color, self.app_width - 80, y + 4, 'center', self.item1_turn_status)
+            # Draw the line text
+            text = self.cut_str(line, 70)
+            self.draw_text(self.font, item_font_color, x + 2, y + 4, 'left', text)
             
+            # Draw "Current Clock Speed" if this is the current clock
+            if self.current_clock and line == self.current_clock:
+                self.draw_text(self.font, item_font_color, x + width - 4, y + 4, 'right', "Current Clock Speed")
+        
+        # Draw button controls at the bottom
+        self.draw_text(self.font, self.gray, self.app_width // 2, self.app_height - 40, 'center', 'A/B: Select   X: Exit')
+        
     def draw_layout_memo(self):
         self.draw_text(self.font, self.white, 8, 8, 'left', 'Display: ' + self.list_selected_item)
         self.draw_text(self.font, self.gray, self.app_width - 8, 8, 'right', self.device_type)
@@ -311,7 +330,7 @@ class App:
 
     def draw_goodbye(self):
         # Center the "Good Bye" text on screen
-        self.draw_text(self.font, self.white, self.app_width // 2, self.app_height // 2, 'center', 'Good Bye')
+        self.draw_text(self.font, self.white, self.app_width // 2, self.app_height // 2, 'center', 'Good Bye! Exiting App...')
 
 if __name__ == "__main__":
     app = App()

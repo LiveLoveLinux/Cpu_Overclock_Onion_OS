@@ -1,6 +1,6 @@
 {
-	"label":	"Sample",
-	"icon":	"/mnt/SDCARD/App/Sample/icon.png",
+	"label":	"CPU Overclock",
+	"icon":	"/mnt/SDCARD/App/CpuOverclock/icon.png",
 	"launch":	"launch.sh",
-	"description":	"Sample python app"
+	"description":	"Choose CPU clock speed"
 }
