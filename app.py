@@ -66,6 +66,8 @@ class App:
         self.black = pygame.Color(0, 0, 0)
         self.white = pygame.Color(255, 255, 255)
         self.gray = pygame.Color(128, 128, 128)
+        self.green = pygame.Color(0, 255, 0)
+        self.red = pygame.Color(255, 0, 0)
         self.menu_item_color = pygame.Color(58, 69, 73)
         self.memo_background_color = pygame.Color(28, 35, 40)
         self.scrollbox_background_color = pygame.Color(60, 70, 72)
@@ -79,6 +81,9 @@ class App:
         self.fps_controller = pygame.time.Clock()
         self.layout_index = 0
         self.goodbye_start_time = 0
+        self.status_message = ''
+        self.status_color = self.white
+        self.status_start_time = 0
         
         # Generate list based on device type
         if self.device_type == 'Miyoo Mini Plus':
@@ -122,6 +127,20 @@ class App:
             self.update_screen()
             self.fps_controller.tick(30) #fps limiter
 
+    def write_cpu_clock(self, clock_value):
+        try:
+            # Get RetroArch directory path
+            retroarch_path = '/mnt/SDCARD/RetroArch'
+            # Check if directory exists
+            if not os.path.exists(retroarch_path):
+                return False
+            # Write the file
+            with open(os.path.join(retroarch_path, 'cpuclock.txt'), 'w') as f:
+                f.write(clock_value)
+            return True
+        except:
+            return False
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -151,16 +170,17 @@ class App:
                     elif event.key == K_RIGHT:
                         if self.progressbar_value < 100:
                             self.progressbar_value += 1
-                    elif event.key == K_RETURN or event.key == K_LCTRL:
+                    elif event.key == K_RETURN or event.key == K_LCTRL:  # START or B button
                         self.list_selected_item = self.main_list[self.list_selected_index]
-                        if self.list_selected_index != 0:
-                            self.layout_index = 1
-                            self.memo_line_offset = 0
+                        # Write CPU clock value when an item is selected
+                        if self.write_cpu_clock(self.list_selected_item):
+                            self.status_message = 'Clock speed set successfully!'
+                            self.status_color = self.green
+                            self.status_start_time = pygame.time.get_ticks()
                         else:
-                            if self.item1_turn_status == '< turn on>':
-                                self.item1_turn_status = '< turn off>'
-                            else:
-                                self.item1_turn_status = '< turn on>'
+                            self.status_message = 'Failed to set clock speed'
+                            self.status_color = self.red
+                            self.status_start_time = pygame.time.get_ticks()
                     elif event.key == K_e:
                         self.btn1_active = not self.btn1_active
                     elif event.key == K_t:
@@ -201,6 +221,10 @@ class App:
     def draw_layout_list(self):
         self.draw_text(self.font, self.white, 8, 8, 'left', 'List')
         self.draw_text(self.font, self.gray, self.app_width - 8, 8, 'right', self.device_type)
+        
+        # Draw status message if within time window (2 seconds)
+        if self.status_message and pygame.time.get_ticks() - self.status_start_time < 2000:
+            self.draw_text(self.font, self.status_color, self.app_width // 2, self.app_height - 100, 'center', self.status_message)
         
         for i, line in enumerate(self.main_list):
             if i < self.list_selected_offset:
