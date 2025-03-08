@@ -7,16 +7,20 @@ A Python application for Miyoo Mini and Miyoo Mini Plus devices running Onion OS
 - Easy-to-use interface for selecting CPU clock speeds
 - Automatic detection of device type (Miyoo Mini vs Miyoo Mini Plus)
 - Different clock speed ranges based on device capabilities
-- Saves clock speed settings to RetroArch configuration
-- Updates NDS emulator settings automatically
+- Saves clock speed settings to RetroArch & NDS configuration
 - Visual indication of current clock speed
-- Smooth exit with goodbye message
+
 
 ## Installation
 
-1. Copy the application files to your Miyoo Mini device
-2. Ensure Python and Pygame are installed on your device
-3. Place the app in an accessible location on your device
+1. Download all files from this GitHub Repository to your computer.
+2. Insert the SD card of your device into your computer.
+3. Navigate to "App" folder on the SD card of your device.
+4. Create a folder called "CpuOverclock". (Must be named exactly this or else the icon for the application wont be displayed correctly).
+5. Copy all files inside the CpuOverclock folder.
+6. Place SD card back into your device and start the device.
+7. The "CPU Overclock" app will now be in the App section of Onion OS.
+   
 
 ## Usage
 
@@ -27,16 +31,10 @@ A Python application for Miyoo Mini and Miyoo Mini Plus devices running Onion OS
 - Status messages confirm successful updates
 
 ## Requirements
-
-- Python 3.x
-- Pygame
-- Onion OS
-- Miyoo Mini or Miyoo Mini Plus device
+- Miyoo Mini or Miyoo Mini Plus device running Onion OS
 
 ## File Structure
-
 - `app.py` - Main application file
-- `cpuclock.txt` - Stores the current CPU clock speed
 - Settings are saved in RetroArch and NDS emulator configurations
 
 ## Notes
