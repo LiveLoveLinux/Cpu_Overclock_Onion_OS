@@ -78,7 +78,14 @@ class App:
         self.font = pygame.font.Font(None, self.font_size)
         self.fps_controller = pygame.time.Clock()
         self.layout_index = 0
-        self.main_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']
+        self.goodbye_start_time = 0
+        
+        # Generate list based on device type
+        if self.device_type == 'Miyoo Mini Plus':
+            self.main_list = [str(x) for x in range(1200, 1900, 100)]
+        else:  # Miyoo Mini or Unknown Device
+            self.main_list = [str(x) for x in range(1200, 1700, 100)]
+            
         self.main_list_output_max = 12
         self.list_selected_index = 0    
         self.list_selected_offset = 0  
@@ -121,8 +128,10 @@ class App:
                 pygame.quit()
                 sys.exit()
             elif event.type == KEYDOWN:
-                # L1=K_e, L2=K_TAB, R1=K_t, R2=K_BACKSPACE, X=K_LSHIFT, Y=K_LALT, B=K_LCTRL, A=K_SPACE, SELECT=K_RCTRL, START=K_RETURN, DPADUP=K_UP, DPADDOWN=K_DOWN, DPAFLEFT=K_LEFT, DPADRIGHT=K_RIGHT
-                if self.layout_index == 0:
+                if event.key == K_LSHIFT:  # X button
+                    self.layout_index = 2  # Switch to goodbye screen
+                    self.goodbye_start_time = pygame.time.get_ticks()
+                elif self.layout_index == 0:
                     if event.key == K_ESCAPE or event.key == K_BACKSPACE or event.key == K_SPACE:
                         pygame.quit()
                         sys.exit()
@@ -160,7 +169,7 @@ class App:
                         self.list_selected_offset = self.list_selected_index // self.main_list_output_max * self.main_list_output_max
                     else:
                         self.list_selected_offset = 0
-                        
+                    
                 elif self.layout_index == 1:
                     if event.key == K_ESCAPE or event.key == K_BACKSPACE or event.key == K_SPACE:
                         self.layout_index = 0
@@ -171,7 +180,6 @@ class App:
                         if self.memo_line_offset < self.memo_lines_max - self.memo_lines_ouput_max:
                             self.memo_line_offset += 1
                     
-                    
     def update_screen(self):
         self.screen.fill((0, 0, 0))
         if self.layout_index == 0:
@@ -181,6 +189,12 @@ class App:
             self.draw_progressbar(8, 440, 300, 20, self.progressbar_value)
         elif self.layout_index == 1:
             self.draw_layout_memo()
+        elif self.layout_index == 2:
+            self.draw_goodbye()
+            # Check if 2 seconds have passed
+            if pygame.time.get_ticks() - self.goodbye_start_time >= 2000:
+                pygame.quit()
+                sys.exit()
         
         pygame.display.flip()
         
@@ -270,6 +284,10 @@ class App:
                     result += '\n'
             
         return result
+
+    def draw_goodbye(self):
+        # Center the "Good Bye" text on screen
+        self.draw_text(self.font, self.white, self.app_width // 2, self.app_height // 2, 'center', 'Good Bye')
 
 if __name__ == "__main__":
     app = App()
