@@ -1,0 +1,6 @@
+{
+	"label":	"Sample",
+	"icon":	"/mnt/SDCARD/App/Sample/icon.png",
+	"launch":	"launch.sh",
+	"description":	"Sample python app"
+}
