@@ -15,9 +15,9 @@ A Python application for Miyoo Mini and Miyoo Mini Plus devices running Onion OS
 
 1. Download all files from this GitHub Repository to your computer.
 2. Insert the SD card of your device into your computer.
-3. Navigate to "App" folder on the SD card of your device.
+3. Navigate to "App" folder on the SD card (/mnt/SDCARD/App/) of your device.
 4. Create a folder called "CpuOverclock". (Must be named exactly this or else the icon for the application wont be displayed correctly).
-5. Copy all files inside the CpuOverclock folder.
+5. Copy all files inside the CpuOverclock folder. Note: No sub folders, everything should be directly in the CpuOverclock folder.
 6. Place SD card back into your device and start the device.
 7. The "CPU Overclock" app will now be in the App section of Onion OS.
    
