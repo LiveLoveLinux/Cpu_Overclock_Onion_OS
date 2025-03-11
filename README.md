@@ -47,3 +47,6 @@ A Python application for Miyoo Mini and Miyoo Mini Plus devices running Onion OS
 ## License
 
 MIT License 
+
+## Attribution
+Special thanks to r57zone and his development of the https://github.com/r57zone/MiyooMiniPythonApp which this was forked from. Without his work this app would not have been possible. For any other developers wanting to build app for the Miyoo mini I highly recommend checking out his repo as it is a great starting point. 
