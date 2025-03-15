@@ -6,17 +6,70 @@ import os
 class App:
     def detect_device_type(self):
         try:
-            # Check for wireless interface
-            wireless_exists = False
-            net_path = '/sys/class/net'
-            for interface in os.listdir(net_path):
-                if os.path.exists(os.path.join(net_path, interface, 'wireless')):
-                    wireless_exists = True
-                    break
-            
-            return 'Miyoo Mini Plus' if wireless_exists else 'Miyoo Mini'
+            # Try to read the device model file
+            with open('/tmp/deviceModel', 'r') as f:
+                device_id = f.read().strip()
+                if device_id == '354':
+                    return 'Miyoo Mini Plus'
+                elif device_id == '283':
+                    return 'Miyoo Mini'
         except:
-            return 'Unknown Device'
+            pass  # Fall through to user selection if file doesn't exist or can't be read
+        
+        return 'Unknown'  # Temporary value until we can show the selection screen
+
+    def show_device_selection(self):
+        # Clear screen
+        pygame.draw.rect(self.screen, self.menu_item_color, (0, 0, self.app_width, self.app_height))
+        self.draw_text(self.font, self.white, self.app_width // 2, 8, 'center', 'Select Your Device')
+        
+        # Device options
+        devices = ['Miyoo Mini', 'Miyoo Mini Plus']
+        selected_index = 0
+        
+        while True:
+            # Clear screen with background color
+            pygame.draw.rect(self.screen, self.menu_item_color, (0, 0, self.app_width, self.app_height))
+            self.draw_text(self.font, self.white, self.app_width // 2, 8, 'center', 'Select Your Device')
+            
+            # Draw device options
+            for i, device in enumerate(devices):
+                if i == selected_index:
+                    item_background_color = self.white
+                    item_font_color = self.black
+                else:
+                    item_background_color = self.menu_item_color
+                    item_font_color = self.white
+                
+                # Draw item background
+                x = 8
+                y = self.font_size * (i + 1) + 8
+                width = self.app_width - 16
+                height = self.font_size
+                pygame.draw.rect(self.screen, item_background_color, (x, y, width, height - 1), 0)
+                
+                # Draw item text
+                self.draw_text(self.font, item_font_color, x + 2, y + 4, 'left', device)
+            
+            # Draw controls help text
+            self.draw_text(self.font, self.gray, self.app_width // 2, self.app_height - 40, 'center', 'A/B: Select   Up/Down: Navigate')
+            
+            pygame.display.flip()
+
+            # Handle input
+            for event in pygame.event.get():
+                if event.type == KEYDOWN:
+                    if event.key == K_UP:
+                        selected_index = (selected_index - 1) % len(devices)
+                    elif event.key == K_DOWN:
+                        selected_index = (selected_index + 1) % len(devices)
+                    elif event.key in [K_RETURN, K_LCTRL, K_SPACE]:  # A or B button
+                        return devices[selected_index]
+                elif event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+            
+            pygame.time.wait(10)  # Small delay to prevent high CPU usage
 
     def draw_text(self, font, color, x, y, align='left', text=''):
         text_obj = font.render(text, True, color)
@@ -67,7 +120,6 @@ class App:
 
     def __init__(self):
         pygame.init()
-        self.device_type = self.detect_device_type()
         self.app_width = 640
         self.app_height = 480
         self.screen = pygame.display.set_mode((self.app_width, self.app_height))
@@ -86,9 +138,15 @@ class App:
         self.button_color_active = pygame.Color(59, 71, 84)
         self.progressbar_color = pygame.Color(50, 54, 65)
         self.progressbar_bar_color = pygame.Color(160, 169, 176)
-        #self.font = pygame.font.Font(os.path.join(os.path.dirname(__file__), 'arial.ttf'), 17)
         self.font_size = 32
         self.font = pygame.font.Font(None, self.font_size)
+
+        # First try to detect device type from file
+        self.device_type = self.detect_device_type()
+        # If unknown, show selection screen
+        if self.device_type == 'Unknown':
+            self.device_type = self.show_device_selection()
+
         self.fps_controller = pygame.time.Clock()
         self.layout_index = 0
         self.goodbye_start_time = 0
